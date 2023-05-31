@@ -1,6 +1,8 @@
 var http       = require('http');
 var url        = require('url');
 var fs         = require('fs');
+var rl         = require('readline');
+var nm         = require('nodemailer');
 var formidable = require('formidable');
 
 var server = new http.createServer(function(req, res) {
@@ -25,11 +27,39 @@ var server = new http.createServer(function(req, res) {
 
     res.write("spammmm");
 
-    /*
-    *  read file
-    *  nodemailer emails
-    */
+    var mail_transporter = nm.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'gmail',
+        pass: 'pass'
+      }
+    });
 
+    var reader = rl.createInterface({
+      input: fs.createReadStream('list.txt')
+    });
+  
+    reader.on('line', function(row) {
+      if(row != "\n") {
+      var mail_opt = {
+        from: 'from', 
+        to: row,
+        subject: 'hello', 
+        text: 'whats up'
+      };
+      
+      mail_transporter.sendMail(mail_opt, function(err, info) {
+        if(err) console.log(err);
+
+        console.log("sent to" + row + " response: " + info.response);
+      });
+    }
+    });
+  
+    reader.on('close', function() {
+      console.log('finished');
+    });
+ 
     return res.end();
   } else { 
     fs.readFile('./upload.html', function(err, data) {
